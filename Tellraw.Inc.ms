@@ -22,6 +22,7 @@ proc _tellraw(@player, @message) {
 }
 
 proc _construct_json(@message) {
+	@json = associative_array();
 	if(array_index_exists(@message, 1)) {
 		@json = _construct_json_meta(@message);
 		if(array_size(@json) == 0) {
@@ -36,63 +37,63 @@ proc _construct_json(@message) {
 }
 
 proc _construct_json_meta(@message) {
+	if(!array_index_exists(@message, 2)) {
+		@message[2] = @message[0];
+	}
 	@message[1] = to_lower(@message[1]);
+	@click = null;
+	@hover = null;
 	switch(@message[1]) {
 		# The URL in open_url _must_ be prefixed by: http:// , else the MC client will crash.
 		case 'open_url':
-			@meta = _construct_json_click(@message);
+			@click = _construct_json_click(@message);
+			@hover = _construct_json_hover('&6Click to open: &r' . @message[2]);
 
-			@url = @meta['clickEvent']['value'];
+			@url = @click['clickEvent']['value'];
 			if(reg_count('https*:\\/\\/', @url) == 0) {
 				@url = 'http://' . @url;
 			}
-			@meta['clickEvent']['value'] = trim(@url);
-			@meta['hoverEvent']['value']['extra'] = _construct_json_color('&6Click to open: &r' . @message[0]);
+			@click['clickEvent']['value'] = trim(@url);
 
 		case 'run_command':
-			@meta = _construct_json_click(@message);
-			@meta['hoverEvent']['value']['extra'] = _construct_json_color('&eClick to run: &r' . @meta['hoverEvent']['value']['extra'][0]['text']);
+			@click = _construct_json_click(@message);
+			@hover = _construct_json_hover('&6Click to run: &r' . @message[2]);
 			
 		case 'suggest_command':
-	 		@meta = _construct_json_click(@message);
+			@click = _construct_json_click(@message);
+			@hover = _construct_json_hover(@message[2]);
 	
 		case 'show_text':
-			@meta = _construct_json_hover(@message);
+			@meta = _construct_json_hover(@message[2]);
 	
 		default:
+			console('[Tellraw] Action ' . @message[1] . ' does not exist.', true);
 			@meta = associative_array();
+	}
+	if(is_array(@click)
+	&& is_array(@hover)) {
+		@meta = array_merge(@click, @hover);
 	}
 	return(@meta);
 }
 
 proc _construct_json_click(@message) {
-	if(array_index_exists(@message, 2)) {
-		@value = @message[2];
-	} else {
-		@value = @message[0];
-	}
 	@meta = associative_array(
 		clickEvent: associative_array(
 			action: @message[1],
-			value: _strip_colors(@value),
+			value: _strip_colors(@message[2]),
 		),
 	);
-	@meta = array_merge(@meta, _construct_json_hover(@message));
 	return(@meta);
 }
 
 proc _construct_json_hover(@message) {
-	if(array_index_exists(@message, 2)) {
-		@value = @message[2];
-	} else {
-		@value = @message[0];
-	}
 	@meta = associative_array(
 		hoverEvent: associative_array(
 			action: 'show_text',
 			value: associative_array(
 				text: '',
-				extra: _construct_json_color(@value),
+				extra: _construct_json_color(@message),
 			),
 		),
 	);
