@@ -4,12 +4,27 @@
  */
 
 proc _tellraw(@player, @message) {
-	@s = nano_time();
 	if(!ponline(@player)) {
 		return();
 	}
 	@json = _json(@message);
 	sudo("/tellraw @player @json");
+}
+
+proc _tellraw_broadcast(@message) {
+	@json = _json(@message);
+	foreach(@player in all_players()) {
+		sudo("/tellraw @player @json");
+	}
+}
+
+proc _tellraw_permission(@permission, @message) {
+	@json = _json(@message);
+	foreach(@player in all_players()) {
+		if(has_permission(@player, @permission)) {
+			sudo("/tellraw @player @json");
+		}
+	}
 }
 
 proc _json(@message) {
