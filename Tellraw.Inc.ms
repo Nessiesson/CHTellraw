@@ -70,7 +70,7 @@ proc _construct_json(@message) {
 					action: @tag,
 				);
 				if(typeof(@value) == 'array') { 
-					@json['hoverEvent']['value'] = replace(colorize(json_encode(@value)), '\"', '');
+					@json['hoverEvent']['value'] = replace(colorize(json_encode(@value)), '\"', '\u0022');
 				} else {
 					@json['hoverEvent']['value'] = colorize(@value);
 				}
