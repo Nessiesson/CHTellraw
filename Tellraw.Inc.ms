@@ -29,54 +29,58 @@ proc _tellraw_permission(@permission, @message) {
 
 proc _json(@message) {
 	if(!is_array(@message)) {
-		@message = array(text: @message);
+		@message = associative_array(
+			text: @message
+		);
 	}
 	@json = associative_array(
-		text: '',
+		text: "",
 		extra: array(),
 	);
 	foreach(@element in @message) {
-		@json['extra'][] = _construct_json(@element);
+		@json["extra"][] = _construct_json(@element);
 	}
-	@json = json_encode(@json);
+	@json = colorize(json_encode(@json));
 	return(@json);
 }
 
 proc _construct_json(@message) {
 	@json = associative_array(
-		text: '',
+		text: "",
 	);
 	foreach(@tag: @value in @message) {
 		@tag = to_lower(@tag);
 		switch(@tag) {
-			case 'text':
-				@json['text'] = colorize(@value);
-			case 'extra':
-				@json['extra'] = @value;
-			case 'open_url':
-			case 'run_command':
-			case 'change_page':
-			case 'suggest_command':
-				@json['clickEvent'] = associative_array(
+			case "text":
+				@json["text"] = @value;
+				break();
+			case "extra":
+				@json["extra"] = @value;
+				break();
+			case "open_url":
+			case "run_command":
+			case "change_page":
+			case "suggest_command":
+				@json["clickEvent"] = associative_array(
 					action: @tag,
-					value: colorize(@value),
+					value: @value,
 				);
 				break();
-			case 'show_text':
-			case 'show_item':
-			case 'show_achievement':
-			case 'show_entity':
-				@json['hoverEvent'] = associative_array(
+			case "show_text":
+			case "show_item":
+			case "show_achievement":
+			case "show_entity":
+				@json["hoverEvent"] = associative_array(
 					action: @tag,
 				);
-				if(typeof(@value) == 'array') { 
-					@json['hoverEvent']['value'] = replace(colorize(json_encode(@value)), '\"', '\u0022');
+				if(typeof(@value) == "string") {
+					@json["hoverEvent"]["value"] = @value;
 				} else {
-					@json['hoverEvent']['value'] = colorize(@value);
+					@json["hoverEvent"]["value"] = replace(json_encode(@value), "\"", "\u0022");
 				}
 				break();
 			default:
-				console("[JSON] Unknown tag: @tag.");
+				console("[JSON] Unknown \"@tag\" tag.");
 		}
 	}
 	return(@json);
